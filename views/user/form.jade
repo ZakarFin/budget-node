@@ -1,0 +1,18 @@
+extends ../layout
+
+block content
+    h1 User
+    form(action='/users/add', method='post')
+      label
+        | Username
+        input(name='login', value='#{user.login}')
+      label
+        | Pass
+        input(name='pass', value='#{user.pass}')
+      label
+        | FirstName
+        input(name='firstName', value='#{user.firstName}')
+      label
+        | LastName
+        input(name='lastName', value='#{user.lastName}')
+      input(type='submit')

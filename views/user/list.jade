@@ -1,0 +1,14 @@
+extends ../layout
+
+block userlist
+    li
+        div
+        | #{user.id} -
+        | #{user.login} -
+        | #{user.firstName}
+        | #{user.lastName}
+
+block content
+    h1 Users
+    each user in users
+        block userlist

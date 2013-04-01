@@ -1,0 +1,22 @@
+extends layout
+
+block content
+    h1= title
+    p Welcome to #{title}
+
+    - if (message)
+        p There was an error: #{message}
+
+
+    - if (user)
+        p #{user.firstName} #{user.lastName} is logged in
+        a(href='/logout') logout
+    - else
+        form(action='/login', method='post')
+          label
+            | Username
+            input(name='login')
+          label
+            | Pass
+            input(name='pass')
+          input(type='submit')
