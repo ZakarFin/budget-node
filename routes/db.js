@@ -12,14 +12,14 @@ exports.test = function (req, res) {
         }
         else {
             /*
-
              CREATE TABLE "user"
              (
              id serial NOT NULL,
              login character varying(50),
              firstname character varying(50),
              lastname character varying(100),
-             pass character varying(200),
+             pass character varying(200)
+             )
              */
 
             client.connect(function (err) {
