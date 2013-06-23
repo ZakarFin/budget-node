@@ -2,9 +2,23 @@
  * GET users listing.
  */
 
+var routes = {
+    "/testdb" : {
+        "get" : {
+            requirement : { role : "user" },
+            handler : justForTesting
+        }
+    }
+};
+
+module.exports.getRoutes = function() {
+    return routes;
+}
+
 var pg = require('pg');
 var connectionString = process.env.DATABASE_URL || "postgres://localhost:5432/budget";
-exports.test = function (req, res) {
+
+function justForTesting(req, res) {
 
     pg.connect(connectionString, function (err, client) {
         if (err) {

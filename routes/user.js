@@ -1,6 +1,57 @@
 /*
- * GET users listing.
+Routes defined in this file
  */
+var routes = {
+    "/users" : {
+        "get" : {
+            requirement : { role : "user" },
+            handler : listUsers
+        }
+    },
+    "/users/add" : {
+        "get" : {
+            requirement : { role : "user" },
+            handler : getUserForm
+        },
+        "post" : {
+            requirement : { role : "user" },
+            handler : insertUser
+        }
+    },
+    "/login" : {
+        "post" : {
+            handler : login
+        }
+    },
+    "/logout" : {
+        "get" : {
+            handler : logout
+        }
+    }
+};
+
+module.exports.getRoutes = function() {
+    return routes;
+}
+
+// register routes above
+/*
+for(var key in routes) {
+    module.exports[key] = routes[key].handler;
+}
+module.exports.registerRoutes = function(app) {
+    for(var key in routes) {
+        var route = routes[key];
+        var params = [];
+        params.push(route.path);
+        if(route.access) {
+            params.push(route.access);
+        }
+        params.push(route.handler);
+        app[route.method].apply(app, params);
+    }
+}
+*/
 
 // https://github.com/ncb000gt/node.bcrypt.js/
 var bcrypt = require('bcrypt');
@@ -85,7 +136,8 @@ function queryDB(params, callback) {
     });
 }
 
-exports.list = function (req, res) {
+
+function listUsers(req, res) {
 
     queryDB({
             sql: 'SELECT id, login, pass, firstname, lastname FROM "user"',
@@ -118,7 +170,7 @@ exports.list = function (req, res) {
         });
 };
 
-exports.login = function (req, res) {
+function login(req, res) {
     queryDB({
             sql: 'select id, login, pass, firstname, lastname from "user" where login=$1',
             args: [req.body.login],
@@ -173,7 +225,7 @@ exports.login = function (req, res) {
 };
 
 
-exports.logout = function (req, res) {
+function logout(req, res) {
     // destroy the user's session to log them out
     // will be re-created next request
     req.session.destroy(function () {
@@ -181,14 +233,14 @@ exports.logout = function (req, res) {
     });
 };
 
-exports.add = function (req, res) {
+function getUserForm(req, res) {
     res.render('user/form', {
         'user': req.session.user,
         'title': "User"
     });
 };
 
-exports.insert = function (req, res) {
+function insertUser(req, res) {
 
     var user = {
         login: req.body.login,

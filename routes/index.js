@@ -1,11 +1,27 @@
 
+var routes = {
+    "/" : {
+        "get" : {
+            handler : index
+        }
+    },
+    "/login" : {
+        "get" : {
+            handler : index
+        }
+    }
+};
+
+module.exports.getRoutes = function() {
+    return routes;
+}
+
 /*
  * GET home page.
  */
-
-exports.index = function(req, res){
+function index(req, res){
     var msg = req.session.error_msg;
-    if(!msg) {
+    if(msg) {
         delete req.session.error_msg;
     }
     res.render('index', {
