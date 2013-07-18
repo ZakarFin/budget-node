@@ -9,13 +9,18 @@ var express = require('express')
 
 var app = express();
 
-app.configure(function () {
+app.configure(function() {
     app.set('port', process.env.PORT || 3000);
     app.set('views', __dirname + '/views');
     app.set('view engine', 'jade');
     app.use(express.favicon());
     app.use(express.logger('dev'));
-    app.use(express.bodyParser());
+    // formidable breaks if bodyparser is used
+    //app.use(express.bodyParser());
+    // these two can be used instead (only parts of bodyparser)
+    app.use(express.json());
+    app.use(express.urlencoded());
+
     app.use(express.methodOverride());
     app.use(express.cookieParser('your secret here'));
     app.use(express.session());
@@ -32,7 +37,8 @@ app.configure('development', function () {
 var controllers = [];
 controllers.push('./routes/index');
 controllers.push('./routes/user');
-controllers.push('./routes/db');
+controllers.push('./routes/finance/expense');
+//controllers.push('./routes/db');
 initRoutes(controllers);
 
 http.createServer(app).listen(app.get('port'), function () {

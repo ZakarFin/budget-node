@@ -10,11 +10,11 @@ var routes = {
     },
     "/users/add" : {
         "get" : {
-            requirement : { role : "user" },
+            //requirement : { role : "user" },
             handler : getUserForm
         },
         "post" : {
-            requirement : { role : "user" },
+           // requirement : { role : "user" },
             handler : insertUser
         }
     },
@@ -58,6 +58,9 @@ var bcrypt = require('bcrypt');
 var _ = require('underscore');
 var pg = require('pg');
 var connectionString = process.env.DATABASE_URL || "postgres://localhost:5432/budget";
+
+var db = require(process.cwd() + '/lib/db');
+
 var BSCRIPT_SALT_ROUNDS = 12;
 
 function getEncryptedPass(pass) {
@@ -100,46 +103,10 @@ function updateUser(user, callback) {
         done();
     });
 }
-/**
- *
- * @param params {Object} of type {
- *  sql : 'select * from table where id=$1',
- *  args : [1],
- *  rowHandler : function(row),
- *  callback : function(err, result)
- * }
- * @param callback
- */
-function queryDB(params, callback) {
-    console.log(process.env.DATABASE_URL);
-    console.log(connectionString);
 
-    pg.connect(connectionString, function (err, client, done) {
-        if (err) {
-            done();
-            callback(err);
-        }
-        else {
-            var query = client.query(params.sql, params.args);
+ function listUsers(req, res) {
 
-            var result = [];
-            query.on('row', function (row) {
-                result.push(params.rowHandler(row));
-            });
-
-            //fired after last row is emitted
-            query.on('end', function () {
-                done();
-                callback(null, result);
-            });
-        }
-    });
-}
-
-
-function listUsers(req, res) {
-
-    queryDB({
+     db.queryDB({
             sql: 'SELECT id, login, pass, firstname, lastname FROM "user"',
             rowHandler: function (row) {
                 return {
@@ -171,7 +138,7 @@ function listUsers(req, res) {
 };
 
 function login(req, res) {
-    queryDB({
+    db.queryDB({
             sql: 'select id, login, pass, firstname, lastname from "user" where login=$1',
             args: [req.body.login],
             rowHandler: function (row) {
@@ -234,8 +201,18 @@ function logout(req, res) {
 };
 
 function getUserForm(req, res) {
+
+    var user = {
+        login: "",
+        pass: "",
+        firstName: "",
+        lastName: ""
+    };
+    if(req.session.user) {
+        user = req.session.user;
+    }
     res.render('user/form', {
-        'user': req.session.user,
+        'user': user,
         'title': "User"
     });
 };

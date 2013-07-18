@@ -1,0 +1,22 @@
+extends ../layout
+
+block content
+    h1 Expense
+    form(action='/finance/add', enctype='multipart/form-data', method='post')
+      label
+        | Title
+        input(name='title', value='#{bill.title}')
+      br
+      label
+        | Description
+        textarea(name='desc') #{bill.desc}
+      br
+      label
+        | Date (2008/12/21)
+        input(name='date', type='date', value='#{bill.date}')
+      br
+      label
+        | Images
+        input(name='image', type='file', accept='image/*', multiple='multiple')
+      br
+      input(type='submit')

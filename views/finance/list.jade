@@ -1,0 +1,14 @@
+extends ../layout
+
+block expenselist
+    li
+        div
+        | #{expense.id} -
+        | #{expense.title} -
+        | #{expense.description}
+        | #{expense.date}
+
+block content
+    h1 Expenses
+    each expense in list
+        block expenselist

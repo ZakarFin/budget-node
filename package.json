@@ -1,5 +1,5 @@
 {
-  "name": "application-name",
+  "name": "Budget-node",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -10,6 +10,9 @@
     "jade": "*",
     "less-middleware": "*",
     "bcrypt": "~0.7.5",
-    "underscore": "~1.4.4"
+    "underscore": "~1.4.4",
+    "pg": "~2.0.0",
+    "formidable": "~1.0.14",
+    "mime": "~1.2.9"
   }
 }

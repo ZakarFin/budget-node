@@ -10,7 +10,13 @@ block content
 
     - if (user)
         p #{user.firstName} #{user.lastName} is logged in
-        a(href='/logout') logout
+        ul
+            li
+              a(href='/logout') logout
+            li
+              a(href='/finance') expense list
+            li
+              a(href='/finance/add') expense add
     - else
         form(action='/login', method='post')
           label
