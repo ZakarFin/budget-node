@@ -12,8 +12,12 @@ block content
         textarea(name='desc') #{bill.desc}
       br
       label
-        | Date (2008/12/21)
+        | Date (2008-12-21)
         input(name='date', type='date', value='#{bill.date}')
+      br
+      label
+        | Amount
+        input(name='amount', type='number', min='0', step='0.01')
       br
       label
         | Images

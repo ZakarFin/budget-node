@@ -27,168 +27,74 @@ var routes = {
         "get" : {
             handler : logout
         }
+    },
+    "/groups" : {
+        "get" : {
+            handler : getGroups
+        }
+    },
+    "/groups/user" : {
+        "get" : {
+            requirement : { role : "user" },
+            handler : getGroupsForUser
+        }
+    },
+    "/roles" : {
+        "get" : {
+            handler : getRoles
+        }
     }
+
 };
 
 module.exports.getRoutes = function() {
     return routes;
 }
 
-// register routes above
-/*
-for(var key in routes) {
-    module.exports[key] = routes[key].handler;
-}
-module.exports.registerRoutes = function(app) {
-    for(var key in routes) {
-        var route = routes[key];
-        var params = [];
-        params.push(route.path);
-        if(route.access) {
-            params.push(route.access);
-        }
-        params.push(route.handler);
-        app[route.method].apply(app, params);
-    }
-}
-*/
-
-// https://github.com/ncb000gt/node.bcrypt.js/
-var bcrypt = require('bcrypt');
+var userService = require(process.cwd() + '/lib/userservice');
+var groupService = require(process.cwd() + '/lib/groupservice');
 var _ = require('underscore');
-var pg = require('pg');
-var connectionString = process.env.DATABASE_URL || "postgres://localhost:5432/budget";
+var util = require('util');
 
-var db = require(process.cwd() + '/lib/db');
 
-var BSCRIPT_SALT_ROUNDS = 12;
-
-function getEncryptedPass(pass) {
-    var salt = bcrypt.genSaltSync(BSCRIPT_SALT_ROUNDS);
-    var hash = bcrypt.hashSync(pass, salt);
-    return hash;
-}
-
-function isPassOk(userPass, dbPass) {
-    return bcrypt.compareSync(userPass, dbPass);
-}
-
-function addUser(user, callback) {
-
-    pg.connect(connectionString, function (err, client, done) {
-
+function listUsers(req, res) {
+    userService.getUsers(function(err, users) {
         if (err) {
-            console.log(err);
+            //req.session.error_msg = 'Error quering db: ' + err;
+            res.send('Error quering db: ' + err);
         }
         else {
-            client.query('INSERT INTO "user"(login, pass, firstname, lastname) values($1, $2, $3, $4)',
-                [user.login, getEncryptedPass(user.pass), user.firstName, user.lastName]);
-        }
-        callback(err);
-        done();
-    });
-}
-function updateUser(user, callback) {
-
-    pg.connect(connectionString, function (err, client, done) {
-
-        if (err) {
-            console.log(err);
-        }
-        else {
-            client.query('UPDATE "user" SET login=$1, pass=$2, firstname=$3, lastname=$4 WHERE id=$5',
-                [user.login, getEncryptedPass(user.pass), user.firstName, user.lastName, user.id]);
-        }
-        callback(err);
-        done();
-    });
-}
-
- function listUsers(req, res) {
-
-     db.queryDB({
-            sql: 'SELECT id, login, pass, firstname, lastname FROM "user"',
-            rowHandler: function (row) {
-                return {
-                    id: row.id,
-                    login: row.login,
-                    pass: row.pass,
-                    firstName: row.firstname,
-                    lastName: row.lastname
-                };
-            }
-        },
-        function (err, result) {
-            if (err) {
-                //req.session.error_msg = 'Error quering db: ' + err;
-                res.send('Error quering db: ' + err);
+            if (users.length) {
+                res.render('user/list', {
+                    'users': users,
+                    'title': "User"
+                });
             }
             else {
-                if (result.length) {
-                    res.render('user/list', {
-                        'users': result,
-                        'title': "User"
-                    });
-                }
-                else {
-                    res.send('No users');
-                }
+                res.send('No users');
             }
-        });
-};
+        }
+    });
+}
 
 function login(req, res) {
-    db.queryDB({
-            sql: 'select id, login, pass, firstname, lastname from "user" where login=$1',
-            args: [req.body.login],
-            rowHandler: function (row) {
-                return {
-                    id: row.id,
-                    login: row.login,
-                    pass: row.pass,
-                    firstName: row.firstname,
-                    lastName: row.lastname
-                };
-            }
-        },
-        function (err, result) {
-            if (err) {
-                req.session.error_msg = 'Error quering db: ' + err;
-            }
-            else if (!result.length) {
-                req.session.error_msg = 'User not found: ' + req.body.login;
-            }
-            else {
-
-                var pass = req.body.pass;
-                var dbUser = result[0];
-                if (isPassOk(pass, dbUser.pass)) {
-
-                    // Now that we have the plain pass from user, check if we should upgrade the salt on db pass
-                    if (bcrypt.getRounds(dbUser.pass) !== BSCRIPT_SALT_ROUNDS) {
-                        console.log('Salt complexity changed, updating user in db');
-                        // Different number of rounds has been specified ->  update the password in db.
-                        var updUser = _.clone(dbUser);
-                        updUser.pass = pass;
-                        updateUser(updUser, function (err) {
-                            if(err) {
-                                console.log('Something went wrong when updating user pass: ' + err);
-                            }
-                        });
-                    }
-                    req.session.regenerate(function () {
-                        req.session.user = dbUser;
-                        res.redirect('/');
-                    });
-                    return;
-                }
-                else {
-                    req.session.error_msg = 'Wrong password for user: ' + req.body.login;
-                }
-            }
-
+    userService.login(req.body.login, req.body.pass, function(err, user) {
+        if (err) {
+            req.session.error_msg = 'Error quering db: ' + err;
+            //res.send('Error quering db: ' + err);
             res.redirect('/');
-        });
+        }
+        else if (!user) {
+            req.session.error_msg = 'User not found or wrong password';
+            res.redirect('/');
+        }
+        else {
+            req.session.regenerate(function () {
+                req.session.user = user;
+                res.redirect('/');
+            });
+        }
+    });
 };
 
 
@@ -225,12 +131,94 @@ function insertUser(req, res) {
         firstName: req.body.firstName,
         lastName: req.body.lastName
     };
-    addUser(user, function (err) {
+
+    userService.register(user, function (err) {
         if (err) {
-            res.send("Error connecting to DB");
+            req.session.error_msg = 'Error quering db: ' + err;
+            res.redirect('/');
         }
         else {
             res.redirect('/users');
         }
     });
 };
+
+function getGroups(req, res) {
+    groupService.getAllGroups(function(err, groups) {
+        if(err) {
+            res.send('Error: ' + err);
+            return;
+        }
+
+        res.writeHead(200, {'content-type': 'text/plain'});
+
+        res.write('Groups:\n\n');
+        _.each(groups, function(elem) {
+            res.write(util.inspect(elem));
+        });
+        res.end();
+
+    });
+}
+
+function getGroupsForUser(req, res) {
+    groupService.getGroupsForUser(req.session.user, function(err, user) {
+        if(err) {
+            res.send('Error: ' + err);
+            return;
+        }
+
+        res.writeHead(200, {'content-type': 'text/plain'});
+
+        res.write('User wiht groups:\n\n');
+        res.write(util.inspect(user, false, 4));
+        //res.write(JSON.stringify(user));
+        res.end();
+
+    });
+    /*
+
+     { id: 1,
+     login: 'zakar',
+     pass: '$2a$12$aihCfT6NnHx60s.E2nkg6.SrbiSz.qVikzH58.jWa8r15fRe28oWK',
+     firstName: 'Sami',
+     lastName: 'Mäkinen',
+     groups:
+     { '1':
+     { id: 1,
+     parent_id: -1,
+     name: 'sami',
+     path: [ 1 ],
+     roles: [ 'admin', 'reader', 'writer' ] },
+     '2':
+     { id: 2,
+     parent_id: 3,
+     name: 'sami lvl 3',
+     path: [ 1, 3, 2 ],
+     roles: [ 'admin', 'reader', 'writer' ] },
+     '3':
+     { id: 3,
+     parent_id: 1,
+     name: 'sami lvl 2',
+     path: [ 1, 3 ],
+     roles: [ 'admin', 'reader', 'writer' ] } } }
+     */
+}
+
+function getRoles(req, res) {
+    userService.getRoles(function(err, roles) {
+        if(err) {
+            res.send('Error: ' + err);
+            return;
+        }
+
+        res.writeHead(200, {'content-type': 'text/plain'});
+
+        res.write('Roles:\n\n');
+        _.each(roles, function(elem) {
+            res.write(util.inspect(elem));
+        });
+        res.end();
+
+    });
+}

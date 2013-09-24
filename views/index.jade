@@ -12,11 +12,11 @@ block content
         p #{user.firstName} #{user.lastName} is logged in
         ul
             li
-              a(href='/logout') logout
+                a(href='/logout') log out
             li
-              a(href='/finance') expense list
+                a(href='/finance') expense list
             li
-              a(href='/finance/add') expense add
+                a(href='/finance/add') expense add
     - else
         form(action='/login', method='post')
           label

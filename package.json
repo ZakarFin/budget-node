@@ -13,6 +13,12 @@
     "underscore": "~1.4.4",
     "pg": "~2.0.0",
     "formidable": "~1.0.14",
-    "mime": "~1.2.9"
+    "mime": "~1.2.9",
+    "moment": "~2.1.0",
+    "jasmine-node": "~1.11.0",
+    "jasmine-sinon": "~0.2.0",
+    "sinon": "~1.7.3",
+    "request": "~2.25.0",
+    "gm": "~1.11.0"
   }
 }
